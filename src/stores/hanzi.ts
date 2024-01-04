@@ -2,25 +2,47 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import cnchar from 'cnchar'
 import { timer } from 'rxjs'
+import type CharacterProvider from '../resources/provider'
+import { SampleTextProvider } from '@/resources/TextParser'
+import { tengwanggexu } from '@/resources/samples/teng-wang-ge-xu'
 
 export class Hanzi {
   character: string
-  pinyin: string
-  toned: string
-  shengmu: string
-  yunmu: string
-  tone: number
+  pinyin?: string
+  toned?: string
+  shengmu?: string
+  yunmu?: string
+  tone?: number
+  error = true
 
   constructor(character: string) {
     this.character = character
-    this.pinyin = (cnchar.spell(character, 'array', 'tone', 'flat') as any[])[0]
-    this.toned = (cnchar.spell(character, 'array', 'tone') as any[])[0]
+    this.init()
+  }
 
-    const [shengmu, yunmu, tone] = splitPinyinDeep(this.pinyin)
+  init() {
+    if (!this.character) {
+      this.pinyin = ''
+      this.toned = ''
+      return
+    }
+    try {
+      this.pinyin = (cnchar.spell(this.character, 'array', 'tone', 'flat') as any[])[0]
+      this.toned = (cnchar.spell(this.character, 'array', 'tone') as any[])[0]
+    } catch {
+      this.pinyin = ''
+      this.toned = ''
+      return
+    }
+
+    const [shengmu, yunmu, tone] = splitPinyinDeep(this.pinyin!)
     this.shengmu = shengmu
     this.yunmu = yunmu
     this.tone = tone
+    this.error = false
   }
+
+  static ERROR = new Hanzi('')
 }
 
 function getPinyin(char: string) {
@@ -32,16 +54,23 @@ function getPinyin(char: string) {
 }
 
 export const useHanziStore = defineStore('hanzi', () => {
-  const currentChar = ref('重')
-  const userInput = ref('')
-  const currentPinyin = computed(() => {
+  const provider: CharacterProvider = new SampleTextProvider(tengwanggexu)
 
-    const [s,y,f,t] = getPinyin(currentChar.value)
+  const currentChar = ref<Hanzi>(provider.getCharacter())
+
+  const next = () => {
+    currentChar.value = provider.getCharacter()
+  }
+
+  const userInput = ref('')
+
+  const currentPinyin = computed(() => {
+    const [s, y, f, t] = getPinyin(currentChar.value.character)
     return {
       shengmu: s,
       yunmu: y,
       full: f,
-      tone: t,  
+      tone: t,
     }
   })
 
@@ -85,7 +114,7 @@ export const useHanziStore = defineStore('hanzi', () => {
     }
 
     if (key === 'Enter') {
-      userInput.value = ''
+      next()
       return
     }
 
@@ -95,13 +124,11 @@ export const useHanziStore = defineStore('hanzi', () => {
 
     if ('abcdefghijklmnopqrstuvwxyz'.includes(key.toLowerCase())) {
       if (userInput.value.length === 2) {
-        userInput.value = ''        
+        userInput.value = ''
       }
       const identifier = getIdentifier('main', key.toUpperCase())
       hilight(identifier)
       userInput.value += key
-
-      
     }
   }
 
@@ -114,15 +141,9 @@ export const useHanziStore = defineStore('hanzi', () => {
     unRegisterHilightable,
     getIdentifier,
     handleKeyDown,
-    
+    next,
   }
 })
-
-function splitPinyin(pinyin): [string, number] {
-  const tone = parseInt(pinyin[pinyin.length - 1])
-  const initial = pinyin.slice(0, -1)
-  return [initial, tone]
-}
 
 export function splitPinyinDeep(pinyin: string): [string, string, number] {
   pinyin = pinyin.trim().toLowerCase()

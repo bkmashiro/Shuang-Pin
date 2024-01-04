@@ -7,8 +7,8 @@
 <script lang="ts" setup>
 import Cap from './KeyCap.vue';
 import { ref, type PropType, watch } from 'vue';
-
 import type { KeyCap } from './keycap';
+
 const props = defineProps({
   items: {
     type: Array as PropType<KeyCap[]>,
@@ -28,7 +28,6 @@ watch(() => props.marginLeft, () => {
 </script>
 
 <style scoped>
-
 .ml {
   margin-left: v-bind('dynamicStyle.marginLeft')
 }

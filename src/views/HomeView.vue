@@ -25,7 +25,7 @@ onMounted(() => {
         <div class="inline text-9xl">
           <div class="flex flex-col text-center">
             <p class="text-xl"> {{ hanziStore.currentPinyin.full }} </p>
-            <p class="inline">{{ hanziStore.currentChar }}</p>
+            <p class="inline">{{ hanziStore.currentChar.character }}</p>
           </div>
         </div>
         <div class="inline text-9xl min-h-32 min-w-64">
