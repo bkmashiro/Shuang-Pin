@@ -11,6 +11,7 @@
     "composite": true,
     "noEmit": true,
     "module": "ESNext",
+    "lib": ["ESNext", "DOM", "ES2022"],
     "moduleResolution": "Bundler",
     "types": ["node"]
   }
